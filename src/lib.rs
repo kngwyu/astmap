@@ -3,15 +3,15 @@ extern crate syntax;
 use std::ops::Deref;
 use std::rc::Rc;
 use syntax::ast;
-use syntax::codemap::{self, FileName, Span};
+use syntax::codemap;
 use syntax::errors::{emitter::Emitter as EmitterT, Diagnostic, DiagnosticBuilder, Handler};
 use syntax::parse::parser::Parser;
 use syntax::parse::{self, ParseSess};
 use syntax::visit::Visitor as VisitorT;
 
-mod errors;
-mod types;
-use errors::{Result, Error};
+pub mod errors;
+pub mod types;
+use errors::{Error, Result};
 
 #[derive(Debug, Default)]
 pub struct Emitter {
@@ -29,34 +29,32 @@ unsafe impl Sync for Emitter {}
 /// Get parser from string s and then apply closure f to it
 pub fn parse_str<F, T>(source: String, f: F) -> Result<T>
 where
-    F: FnOnce(&mut Parser) -> Result<T>
+    F: FnOnce(&mut Parser) -> Result<T>,
 {
     syntax::with_globals(|| {
         let codemap = Rc::new(codemap::CodeMap::new(codemap::FilePathMapping::empty()));
-        let handler =
-            Handler::with_emitter(false, false, Box::new(Emitter::default()));
+        let handler = Handler::with_emitter(false, false, Box::new(Emitter::default()));
         let parse_sess = ParseSess::with_span_handler(handler, codemap);
         let mut p = parse::new_parser_from_source_str(
             &parse_sess,
-            FileName::Custom("bogofile".to_owned()),
+            codemap::FileName::Custom("bogofile".to_owned()),
             source,
         );
         f(&mut p)
     })
 }
 
-
 /// parse string source_str as statement and then apply f to it
 /// return false if we can't parse s as statement
 // TODO: make F FnOnce(&ast::Stmt) -> Result<Something, Error>
 pub fn with_stmt<F>(source_str: String, f: F) -> Result<()>
 where
-    F: FnOnce(&ast::Stmt) -> Result<()>
+    F: FnOnce(&ast::Stmt) -> Result<()>,
 {
     parse_str(source_str, |p| {
         let stmt = match p.parse_stmt() {
             Ok(Some(stmt)) => stmt,
-            _ => return Err(Error{})
+            _ => return Err(Error {}),
         };
         f(&stmt)
     })
