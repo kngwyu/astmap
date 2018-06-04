@@ -1,3 +1,4 @@
+extern crate rustc_data_structures;
 extern crate syntax;
 
 use std::ops::Deref;
@@ -10,6 +11,7 @@ use syntax::parse::{self, ParseSess};
 use syntax::visit::Visitor as VisitorT;
 
 pub mod errors;
+pub mod idtree;
 pub mod types;
 use errors::{Error, Result};
 
